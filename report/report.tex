@@ -1,0 +1,75 @@
+\documentclass[notitlepage]{article}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{wrapfig}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithm
+% \usepackage{algorithmic}
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, margin=2.5cm, left=3.5cm, right=3.5cm]{geometry}
+\usepackage{accents}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage{multirow}
+\usepackage{pdfpages}
+\usepackage{subcaption}
+\usepackage{sectsty}
+\usepackage{ragged2e}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{etoolbox}
+\usepackage[outline]{contour}
+\usepackage[font=small,skip=1pt]{caption}
+\usepackage{enumitem}
+\usepackage{tikz}
+%Includes "References" in the table of contents
+\usepackage[nottoc]{tocbibind}
+\usepackage{appendix}
+\usepackage{xcolor,colortbl}
+
+
+\newcommand{\highlight}[1]{{\cellcolor{yellow!30} #1}}
+
+\setlength\parindent{0pt}
+
+\setlength{\tabcolsep}{20pt}
+\renewcommand{\arraystretch}{1.5}
+
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+
+\algnewcommand\algorithmicforeach{\textbf{for each}}
+\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
+
+\titleformat{\chapter}[block]
+  {\normalfont\huge\bfseries}{\thechapter.}{10pt}{\huge}
+\titlespacing*{\chapter}{0pt}{0pt}{10pt}
+
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+
+\title{Parallel Boruvka\\{\normalsize Final project for the SPM course 2020/21}}
+\author{Matteo De Francesco}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\tableofcontents
+
+\newpage
+
+\pagenumbering{arabic}
+
+\section{Introduction}
+
+\end{document}
