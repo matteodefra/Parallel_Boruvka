@@ -1,8 +1,8 @@
 # Fdb version 3
-["pdflatex"] 1634486110 "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.tex" "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.pdf" "report" 1634486111
+["pdflatex"] 1634505586 "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.tex" "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.pdf" "report" 1634505587
   "/etc/texmf/web2c/texmf.cnf" 1628348412 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.aux" 1634486111 1609 b10f808b8d533db670f4e3811899eaf0 ""
-  "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.tex" 1634486109 6353 665116b3fb48f4182d80e18b009dab22 ""
+  "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.aux" 1634505586 1609 b10f808b8d533db670f4e3811899eaf0 ""
+  "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.tex" 1634505585 6265 4631b19f161e362214449e2a6d4f5346 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -199,13 +199,13 @@
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1628353998 116815 042f274caa7e6ea7d614393f8f13cc15 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1628354003 4879716 5ede77bad0f944b977bca4a511263e98 ""
   "pics/parallel_schema.png" 1634391255 30359 9ed4944830fda282243014e419a61083 ""
-  "report.aux" 1634486111 1609 b10f808b8d533db670f4e3811899eaf0 "pdflatex"
-  "report.tex" 1634486109 6353 665116b3fb48f4182d80e18b009dab22 ""
-  "report.toc" 1634486111 147 eebae90aec847381f4843bc540e1ba60 "pdflatex"
+  "report.aux" 1634505586 1609 b10f808b8d533db670f4e3811899eaf0 "pdflatex"
+  "report.tex" 1634505585 6265 4631b19f161e362214449e2a6d4f5346 ""
+  "report.toc" 1634505586 147 eebae90aec847381f4843bc540e1ba60 "pdflatex"
   (generated)
+  "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.log"
+  "report.toc"
   "report.aux"
   "report.log"
-  "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.log"
   "report.pdf"
-  "report.toc"
   "/home/matteo/Documents/UNIPI/SPM/project/Parallel_Boruvka/report/report.pdf"
