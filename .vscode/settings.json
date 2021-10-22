@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "condition_variable": "cpp",
+        "set": "cpp"
+    }
+}
