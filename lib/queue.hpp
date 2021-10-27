@@ -68,5 +68,3 @@ class MyQueue {
         }
 
 };
-
-#define EOS NULL
