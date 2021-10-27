@@ -8,16 +8,27 @@
 
 int main(int argc, char* argv[]) {
 
-    // Graph graph = Graph();
+    Graph graph = Graph();
 
-    // graph.createGraph();
+    graph.createGraph();
 
-    // std::vector<std::pair<uint,uint>> edges = graph.getEdges();
+    std::unordered_map<uint, std::vector<Edge>> map = graph.getGraph();
 
-    // for (std::pair<uint,uint> pair : edges) {
-    //     std::cout << "Elements: " << pair.first << "--" << pair.second << std::endl;
-    // }
+    for (auto pair : map) {
+        std::cout << "Node: " << pair.first << " ";
+        for (auto edge : pair.second) {
+            std::cout << "(" << edge.adjacent_node << "," << edge.weight << "),";
+        }
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
 
-    // return (0);
+    std::cout << "Number of nodes: " << graph.getNumNodes() << std::endl;
+    std::cout << "Number of edges: " << graph.getNumEdges() << std::endl;
+
+    
+    
+
+    return (0);
 
 }
