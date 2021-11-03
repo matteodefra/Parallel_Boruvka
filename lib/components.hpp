@@ -1,3 +1,5 @@
+#if !defined(__COMPONENTS_H)
+#define __COMPONENTS_H
 
 /**
  * Implementations of the required components in the farm, such as 
@@ -11,7 +13,7 @@
 #include "utimer.hpp"
 #include <algorithm>
 #include <thread>
-// #include "utils.hpp"
+#include "dset.hpp"
 
 #define EOS std::pair<uint,uint> (0,0)
 
@@ -54,6 +56,8 @@ void emitter(
     for (short i = 0; i < nw; i++) {
         // Create pair for the index in the component vector
         std::pair<uint, uint> chunk (begin, end);
+
+        std::cout << chunk.first << "," << chunk.second << std::endl;
         // Push the pair in the correspoding queue
         queues[i].push(std::move(chunk));
         // Update begin index
@@ -92,78 +96,39 @@ void emitter(
 }
 
 
-void findMinimumConnection(
-    std::set<uint> component,
-    std::vector<LightestConnection>& local_MST,
-    std::unordered_map<uint, std::vector<Edge>> graph
-) {
-    float minimum = INFINITY;
-    uint startingNode = 0;
-    uint endingNode = 0;
-
-    // Loop through node for each component
-    for (auto node : component) {
-
-        // Retrieve the list of edges
-        std::vector<Edge> edges = graph[node];
-
-        // Loop through list of edges
-        for (Edge edge : edges) {
-
-            // If adjacent node is not present in the same component, there no cycle are guaranteed
-            if (component.find(edge.adjacent_node) == component.end()) {
-
-                // Update minimum and edge for this component
-                if (edge.weight < minimum) {
-
-                    minimum = edge.weight;
-                    startingNode = node;
-                    endingNode = edge.adjacent_node;
-
-                }
-
-            }
-
-        }
-
-    }
-    // At this point, minimum contains the lightest weight and the pair shortest_edge the starting and ending node
-
-    LightestConnection lightest = {minimum, startingNode, endingNode};
-
-    // std::cout << "Finding lightest edge: (" << lightest.startingNode << "," << lightest.endingNode << ") with weight: " << lightest.weight << std::endl;
-
-    local_MST.push_back(lightest);
-
-}
-
-
 /**
  * @brief               Compute the minimum outgoing edge from each component
  * 
  * @param id            The correspoding thread id of the worker
  * @param components    The vector of components (vector of list of nodes)
- * @param edges         The list of edges where the minimum is stored
  * @param thread_queue  The queue where components indexes are stored
  * @param feedback      Feedback queue with the emitter to notify completion of the task
+ * @param local_edges   The map of edges where the minimum is stored
+ * @param graph         The entire graph data structure
  * 
  * @example 
  *  id = 1
  *  components = [ {1, 3}, {2, 7}, {5, 4}, {6, 10}, {8, 9} ] 
- *  edges = [ (1,3),(2,7),(5,4),(6,10),(8,9) ]
  *  thread_queue = [ (0,1) ]    if nw = 3 then n/nw \approx 2 
  *  feedback = [] when task is completed [1]
+ *  local_edges = [ (1,3),(2,7),(5,4),(6,10),(8,9) ]
  */
 void map_worker(
     const short &id,
-    std::vector<std::set<uint>>& components,
+    DisjointSets& components,
     MyQueue<std::pair<uint,uint>>& thread_queue,
     MyQueue<short>& feedback,
-    std::vector<LightestConnection>& local_MST,
-    std::unordered_map<uint, std::vector<Edge>> graph
+    std::vector<MyEdge>& local_edges,
+    Graph& graph
 ) {
 
     std::cout << "Thread " << id << " starting" << std::endl;
+
+    for (int i = 0; i < graph.getNumNodes(); i++) {
+        local_edges.push_back({0, 0, 10});
+    }
+
+    std::cout << "Total size of local_edges: " << local_edges.size() << std::endl;
 
     bool active = true;
 
@@ -178,33 +143,61 @@ void map_worker(
         }
 
         else {
-            // Get the indexes
+            // Get the indexes of the edge array
             uint starting_index = chunk_indexes.first;
 
             uint ending_index = chunk_indexes.second;
 
-            // Extract portion of the vector required
-            std::vector<std::set<uint>> components_to_analyze = {components.begin() + starting_index, components.begin() + ending_index};
+            for (uint i = chunk_indexes.first; i < chunk_indexes.second; i++) {
+                // Retrieve edge
+                MyEdge &edge = graph.getEdges()[i];
 
-            for (auto component : components_to_analyze) {
-                // Find minimum spanning edge for each component
-                findMinimumConnection(component, std::ref(local_MST), graph);
-                // std::cout << "Local MST size: " << local_MST.size() << std::endl;
+                if (local_edges[edge.from].weight > edge.weight) {
+                    // Found edge with same starting node and minimum weight
+                    local_edges[edge.from].weight = edge.weight;
+                    local_edges[edge.from].from = edge.from;
+                    local_edges[edge.from].to = edge.to;
+                }
             }
+
+            std::cout << "Total size of local_edges: " << local_edges.size() << std::endl;
             
             feedback.push(id);
         }
 
     }
-    // Here local_MST contains all the minimum connection for each component
+    // Here local_edges contains all the minimum connection for each component
 
 }
 
 
-// void reduce_worker(
-//     const short &id,
-//     std::vector<std::vector<int>>& components,
-//     std::vector<std::vector<std::pair<uint, uint>>>& edges
-// ) {
+/**
+ * @brief               Compute the minimum outgoing edge from each component
+ * 
+ * @param id            The correspoding thread id of the worker
+ * @param components    The vector of components (vector of list of nodes)
+ * @param thread_queue  The queue where components indexes are stored
+ * @param feedback      Feedback queue with the emitter to notify completion of the task
+ * @param local_edges   The map of edges where the minimum is stored
+ * @param graph         The entire graph data structure
+ * 
+ * @example 
+ *  id = 1
+ *  components = [ {1, 3}, {2, 7}, {5, 4}, {6, 10}, {8, 9} ] 
+ *  thread_queue = [ (0,1) ]    if nw = 3 then n/nw \approx 2 
+ *  feedback = [] when task is completed [1]
+ *  local_edges = [ (1,3),(2,7),(5,4),(6,10),(8,9) ]
+ */
+void reduce_worker(
+    const short &id,
+    std::vector<std::vector<int>>& components,
+    MyQueue<std::pair<uint,uint>>& thread_queue,
+    MyQueue<short>& feedback
+    // std::unordered_map<uint,Edge>& local_edges,
+    // std::unordered_map<uint, std::vector<Edge>> graph
+) {
     
-// }
+}
+
+
+#endif 

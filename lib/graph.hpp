@@ -1,3 +1,6 @@
+#if !defined(__GRAPH_H)
+#define __GRAPH_H
+
 #include <utility>
 #include <iostream>
 #include <vector>
@@ -6,17 +9,20 @@
 #include <unordered_map>
 #include <random>
 #include "utils.hpp"
+#include <vector>
 
 class Graph {
 
     private: 
 
-        // Unordered map for fast access to adjiacency list
-        std::unordered_map<uint, std::vector<Edge>> graph;
+        // Vector of nodes
+        std::vector<uint> nodes;
         // Total number of nodes
         uint num_nodes;
         // Total number of edges
         uint num_edges;
+        // List of edges
+        std::vector<MyEdge> edges; 
 
     public:
 
@@ -28,10 +34,8 @@ class Graph {
         ~Graph() {}
 
 
-        std::unordered_map<uint, std::vector<Edge>> getGraph() {
-
-            return this->graph;
-
+        std::vector<uint> getNodes() {
+            return this->nodes;
         }
 
         uint getNumNodes() {
@@ -42,6 +46,9 @@ class Graph {
             return this->num_edges;
         }
 
+        std::vector<MyEdge> getEdges() {
+            return this->edges;
+        }
 
         /**
          * @brief Create graph object, by filling the vector of Edge above
@@ -56,6 +63,8 @@ class Graph {
             uint a, b;
             float c;
 
+            std::set<uint> nodes;
+
             // Deleted first four lines of file, contains the information above
             while (infile >> a >> b >> c) {
 
@@ -63,63 +72,18 @@ class Graph {
 
                 float weight = c + variance;
 
-                // First insert pair (a,b)
-                if (graph.find(a) == graph.end()) {
-                    // Key not exist
-                    // Create edge object
-                    struct Edge edge;
-                    edge.adjacent_node = b;
-                    edge.weight = weight;
+                edges.push_back({a, b, weight});
 
-                    // Initialize vector of edges and insert (key,value) in the map
-                    std::vector<Edge> edges;
-                    edges.push_back(edge); 
-                    graph.insert(std::make_pair(a, edges));
+                this->num_edges += 1;
 
-                    this->num_nodes++;
-                    this->num_edges++;
-                }
-                else {
-
-                    // Create edge object
-                    struct Edge edge;
-                    edge.adjacent_node = b;
-                    edge.weight = weight;
-
-                    graph[a].push_back(edge);
-
-                    this->num_edges++;
-                }
-
-                // Then insert pair (b,a)
-                if (graph.find(b) == graph.end()) {
-                    // Key not exist
-                    // Create edge object
-                    struct Edge edge;
-                    edge.adjacent_node = a;
-                    edge.weight = weight;
-
-                    // Initialize vector of edges and insert (key,value) in the map
-                    std::vector<Edge> edges;
-                    edges.push_back(edge); 
-                    graph.insert(std::make_pair(b, edges));
-
-                    this->num_nodes++;
-                    this->num_edges++;
-                }
-                else {
-
-                    // Create edge object
-                    struct Edge edge;
-                    edge.adjacent_node = a;
-                    edge.weight = weight;
-
-                    graph[b].push_back(edge);
-
-                    this->num_edges++;
-                }            
+                nodes.insert(a);
+                nodes.insert(b);
 
             }
+
+            this->nodes.assign(nodes.begin(), nodes.end());
+
+            this->num_nodes = this->nodes.size();
 
             this->num_edges = this->num_edges / 2;
 
@@ -128,3 +92,5 @@ class Graph {
 
 
 };
+
+#endif

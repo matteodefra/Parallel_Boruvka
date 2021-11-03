@@ -141,6 +141,7 @@ A possible schema of our parallel application can be the following:
 
 As components arrives, the {\itshape Emitter} splits the workload among different workers. Each one of them apply the map function and create a local copy of $MST$, which is stored in the queue. As soon as 
 all the items are processed, the {\itshape reduce} part begins and the different edges in the local $MST$ are connected together. In this way we update the global $MST$ and obtain new components, 
-which are sent back from the {\itshape Collector} to the {\itshape Emitter} and the cycle repeats, until there is only one left.
+which are sent back from the {\itshape Collector} to the {\itshape Emitter} and the cycle repeats, until there is only one left.\\
+Multiple graphs\footnote{Taken from \url{https://networkrepository.com/networks.php}} were tested.
 
 \end{document}

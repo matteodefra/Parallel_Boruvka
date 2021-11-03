@@ -1,12 +1,19 @@
+#if !defined(__UTILS_H)
+#define __UTILS_H
+
 #include <iostream>
 
-struct Edge {
-    uint adjacent_node;
+
+struct MyEdge {
+    uint from;
+    uint to;
     float weight;
+
+    bool operator==(const MyEdge& conn) const {
+
+        return (conn.from == from && conn.to == to) || (conn.from == to && conn.to == from); 
+
+    }
 };
 
-struct LightestConnection {
-    float weight;
-    uint startingNode;
-    uint endingNode;
-};
+#endif
