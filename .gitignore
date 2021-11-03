@@ -1,3 +1,3 @@
 /data
-!/report/report.pdf
-/report
+report/*
+!report/report.pdf
