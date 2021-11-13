@@ -15,8 +15,6 @@
  * "Wait-free Parallel Algorithms for the Union-Find Problem"
  * by Richard J. Anderson and Heather Woll
  *
- * In addition, this class supports optimistic locking (try_lock/unlock)
- * of disjoint sets and a combined unite+unlock operation.
  */
 class DisjointSets {
 
