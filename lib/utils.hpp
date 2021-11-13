@@ -11,8 +11,12 @@ struct MyEdge {
 
     bool operator==(const MyEdge& conn) const {
 
-        return (conn.from == from && conn.to == to) || (conn.from == to && conn.to == from); 
+        return (conn.from == from && conn.to == to); 
 
+    }
+
+    bool operator<(const MyEdge& conn) const {
+        return (conn.from > from) || (conn.from == from && conn.to > to);
     }
 };
 

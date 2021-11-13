@@ -67,5 +67,6 @@
         "*.txx": "cpp",
         "unordered_set": "cpp",
         "cfenv": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }
