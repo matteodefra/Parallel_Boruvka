@@ -1,44 +1,46 @@
-CPPFLAGS 	= -std=c++17 -pthread -Wall -Wzero-as-null-pointer-constant -O3 -g
-LDFLAGS 	=
-LDLIBS		=
-AR			= ar
-ARFLAGS		= rvs
+DIR := ${CURDIR}
 
-TARGETS 	=	build/boruvka_parallel_thread 
+ifndef FF_ROOT 
+FF_ROOT		= ${DIR}/fastflow
+endif
 
-INCLUDES	=	lib/dset.hpp \
-				lib/utils.hpp \
-				lib/components.hpp \
-				lib/graph.hpp \
-				lib/queue.hpp \
-				lib/utimer.hpp 
-					
+CXX			= g++ -std=c++17 
+INCLUDES	= -I $(FF_ROOT) 
+CXXFLAGS  	= -g # -DBLOCKING_MODE -DFF_BOUNDED_BUFFER
 
-.PHONY: all clean directories
+LDFLAGS 	= -pthread
+OPTFLAGS	= -O3 -finline-functions -w -DNDEBUG
 
-# .SUFFIXES: .cpp .hpp
+PRELDFLAGS 	= LD_PRELOAD=${DIR}/jemalloc/lib/libjemalloc.so.2
 
-build/%: %.cpp 
-	g++ $(CPPFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $< $(LDLIBS)
+TARGETS 	=	build/boruvka_sequential \
+				build/boruvka_parallel_thread \
+				build/boruvka_fastflow
 
-# build/%: src/%.cpp 
-# 	g++ $(CPPFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
-# build/%.o: %.cpp 
-# 	g++ $(CFLAGS) $(INCLUDES) $(LDFLAGS) -c -o $@ $< $(LDLIBS) 
+.PHONY: all clean test_par test_seq test_ff
 
-# build/%.o: src/%.cpp 
-# 	g++ $(CFLAGS) $(INCLUDES) $(LDFLAGS) -c -o $@ $< $(LDLIBS) 
-
+.SUFFIXES: .cpp 
 
 all: $(TARGETS)
 
-build/boruvka_parallel_thread: boruvka_parallel_thread.cpp
-	g++ $(CPPFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+build/boruvka_sequential: boruvka_sequential.cpp
+	$(CXX) $(CXXFLAGS) $(OPTFLAGS) -o $@ $^ $(LDFLAGS)
 
+build/boruvka_parallel_thread: boruvka_parallel_thread.cpp
+	$(CXX) $(CXXFLAGS) $(OPTFLAGS) -o $@ $^ $(LDFLAGS)
+
+build/boruvka_fastflow: boruvka_parallel_fastflow.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(OPTFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -rf build/*
 
-directories:
-	mkdir -p build
+test_seq:
+	$(PRELDFLAGS) ./build/boruvka_sequential 10 20 "V1000_E10000.txt"
+
+test_par:
+	$(PRELDFLAGS) ./build/boruvka_parallel_thread 4 10 20 "V1000_E10000.txt"
+
+test_ff:
+	$(PRELDFLAGS) ./build/boruvka_fastflow 4 10 20 "V1000_E10000.txt"

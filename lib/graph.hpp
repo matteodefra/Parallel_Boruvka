@@ -57,9 +57,9 @@ class Graph {
         /**
          * @brief Create graph object, by filling the vector of Edge above
          */ 
-        void loadGraph() {
+        void loadGraph(std::string filename) {
 
-            std::ifstream infile("data/example.edges");
+            std::ifstream infile("data/" + filename);
 
             const int MIN = -1;
             const int MAX = 1;
@@ -99,7 +99,7 @@ class Graph {
          */ 
         void loadGraphUnweighted() {
 
-            std::ifstream infile("data/roadNet-CA.txt");
+            std::ifstream infile("data/inf-openflights.edges");
 
             const int MIN = 0;
             const int MAX = 10;
@@ -125,7 +125,7 @@ class Graph {
             this->nodes.assign(nodes.begin(), nodes.end());
             this->edges.assign(edges.begin(), edges.end());
 
-            this->originalNodes = this->nodes.size();
+            this->originalNodes = this->getNumNodes();
 
         }
 
@@ -159,6 +159,16 @@ class Graph {
 
             this->nodes.assign(nodes.begin(), nodes.end());
             this->edges.assign(edges.begin(), edges.end());
+
+            std::ofstream file ("graph.txt");
+
+            if (file.is_open()) {
+                for (auto &edge : this->edges) {
+                    file << edge.from << " " << edge.to << " " << edge.weight << "\n";
+                }
+            }
+
+            file.close();
 
             this->originalNodes = this->nodes.size();
 

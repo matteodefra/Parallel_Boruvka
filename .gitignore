@@ -2,3 +2,4 @@
 report/*
 !report/report.pdf
 /build
+/jemalloc

@@ -3,12 +3,13 @@
 #include "lib/components.hpp"
 #include "lib/dset.hpp"
 #include <algorithm>
+#include <atomic>
 
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 4) {
-        std::cout << "Usage ./[executable] nw number_nodes number_edges" << std::endl;
+    if (argc != 5) {
+        std::cout << "Usage ./[executable] nw number_nodes number_edges filename" << std::endl;
         return (0);
     }
 
@@ -18,24 +19,31 @@ int main(int argc, char *argv[]) {
 
     uint num_edges = std::atoi(argv[3]);
 
+    std::string filename = std::string(argv[4]);
+
     std::cout << "Num workers: " << num_w << std::endl;
 
     Graph graph = Graph();
 
-    // graph.loadGraph();
-    // graph.loadGraphUnweighted();
-    graph.generateGraph(num_nodes, num_edges);
-
-    // std::cout << graph << std::endl;
+    if (filename.empty()) {
+        graph.generateGraph(num_nodes, num_edges);
+    }
+    else {
+        graph.loadGraph(filename);
+    }
 
     // Disjoint Union Find structure
     DisjointSets initialComponents = { static_cast<uint32_t>(graph.getNumNodes()) };
 
-    std::set<MyEdge> MST;
-
-    std::cout << initialComponents << std::endl;
+    std::atomic<int> MST_weight;
 
     int iter = 0;
+
+    long total_time = 0;
+
+    std::cout << "Total nodes in the graph: " << graph.getNumNodes() << std::endl;
+
+    std::cout << "Total edges in the graph: " << graph.getNumEdges() << std::endl;
     
     while (graph.getNumNodes() != 1) {
 
@@ -51,8 +59,10 @@ int main(int argc, char *argv[]) {
         // Vector of threads
         std::vector<std::thread> map_workers (num_w);
 
+        long map_time;
+
         {
-            Utimer timer("Map parallel time");
+            Utimer timer("Map parallel time", &map_time);
 
             for (short i = 0; i < num_w; i++) {
 
@@ -60,7 +70,6 @@ int main(int argc, char *argv[]) {
                 std::thread worker_thread(
                     map_worker,
                     i,
-                    std::ref(initialComponents),
                     std::ref(thread_queues[i]),
                     std::ref(feedbackQueue),
                     std::ref(local_edges[i]),
@@ -90,9 +99,11 @@ int main(int argc, char *argv[]) {
         // Vector of threads
         std::vector<std::thread> merge_workers (num_w);
 
+        long merge_time;
+
         {
 
-            Utimer timer("Merge edges");
+            Utimer timer("Merge edges", &merge_time);
 
             for (short i = 0; i < num_w; i++) {
 
@@ -128,9 +139,11 @@ int main(int argc, char *argv[]) {
         // Vector of threads
         std::vector<std::thread> contraction_workers (num_w);
 
+        long contraction_time;
+
         {
 
-            Utimer timer("Contraction nodes");
+            Utimer timer("Contraction nodes", &contraction_time);
 
             for (short i = 0; i < num_w; i++) {
 
@@ -142,7 +155,7 @@ int main(int argc, char *argv[]) {
                     std::ref(thread_queues[i]),
                     std::ref(feedbackQueue),
                     std::ref(global_edges),
-                    std::ref(MST)
+                    std::ref(MST_weight)
                 );
 
                 // Allocate them in vector
@@ -173,9 +186,11 @@ int main(int argc, char *argv[]) {
 
         std::vector<std::vector<uint>> selected_nodes (num_w);
 
+        long filtering_edge_time;
+
         {
 
-            Utimer timer("Filter edges");
+            Utimer timer("Filter edges", &filtering_edge_time);
 
             for (short i = 0; i < num_w; i++) {
 
@@ -211,9 +226,11 @@ int main(int argc, char *argv[]) {
 
         std::vector<std::thread> filtering_workers2 (num_w);
 
+        long filtering_node_time;
+
         {
 
-            Utimer timer("Filter nodes");
+            Utimer timer("Filter nodes", &filtering_node_time);
 
             for (short i = 0; i < num_w; i++) {
 
@@ -237,7 +254,7 @@ int main(int argc, char *argv[]) {
             emitter(
                 std::ref(thread_queues),
                 std::ref(feedbackQueue),
-                graph.getNumNodes()
+                graph.originalNodes
             );
 
             // Joins all the entities
@@ -250,14 +267,22 @@ int main(int argc, char *argv[]) {
         std::vector<MyEdge> remaining_edges;
         std::vector<uint> remaining_nodes;
 
-        for (auto &vect : selected_edges) {
-            remaining_edges.insert(remaining_edges.end(), vect.begin(), vect.end());
+        long filtering_time;
+
+        {
+            Utimer timer("Final filtering", &filtering_time);
+
+            for (auto &vect : selected_edges) {
+                remaining_edges.insert(remaining_edges.end(), vect.begin(), vect.end());
+            }
+
+            for (auto &vect : selected_nodes) {
+                remaining_nodes.insert(remaining_nodes.end(), vect.begin(), vect.end());
+            }
+
         }
 
-        for (auto &vect : selected_nodes) {
-            remaining_nodes.insert(remaining_nodes.end(), vect.begin(), vect.end());
-        }
-
+        total_time += map_time + merge_time + contraction_time + filtering_edge_time + filtering_node_time + filtering_time; 
         
         std::cout << std::endl;
 
@@ -285,17 +310,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    float sum = 0;
-
     std::cout << "Computation finished" << std::endl;
 
     std::cout << "Total iters: " << iter << std::endl;
-    
-    for (auto edge : MST) {
-        sum += edge.weight;
-    }
-    
-    std::cout << "Total weight of MST: " << sum << std::endl;
+
+    std::cout << "Total time required: " << total_time << " usec" << std::endl;
+     
+    std::cout << "Total weight of MST: " << MST_weight.load() << std::endl;
 
     return (0);
 

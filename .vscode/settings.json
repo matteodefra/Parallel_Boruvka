@@ -66,7 +66,9 @@
         "variant": "cpp",
         "*.txx": "cpp",
         "unordered_set": "cpp",
-        "cfenv": "cpp"
+        "cfenv": "cpp",
+        "strstream": "cpp",
+        "future": "cpp"
     },
     "cmake.configureOnOpen": false
 }
