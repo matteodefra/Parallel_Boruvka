@@ -15,7 +15,7 @@
 #include <thread>
 #include "dset.hpp"
 
-#define EOS std::pair<uint,uint> (0,0)
+#define MY_EOS std::pair<uint,uint> (0,0)
 
 
 /**
@@ -69,14 +69,15 @@ void emitter(
 
         // We reached the end of the chunks
         if (begin == n) {
-            // Pass the EOS value
-            queues[thread_id].push(std::move(EOS));
+            // Pass the MY_EOS value
+            queues[thread_id].push(std::move(MY_EOS));
             // Worker terminates
             nw--;
         }
         else {
             // New pair to store into the queue
             std::pair<uint, uint> chunk (begin, end);
+            std::cout << chunk.first << "," << chunk.second << std::endl;
             queues[thread_id].push(std::move(chunk));
             // Updating begin and ending indexes
             begin = end;
@@ -107,7 +108,6 @@ void emitter(
  */
 void map_worker(
     const short &id,
-    DisjointSets& components,
     MyQueue<std::pair<uint,uint>>& thread_queue,
     MyQueue<short>& feedback,
     std::vector<MyEdge>& local_edges,
@@ -123,8 +123,8 @@ void map_worker(
 
         std::pair<uint,uint> chunk_indexes = thread_queue.pop();
 
-        if (chunk_indexes == EOS) {
-            // If EOS is received, stop the thread
+        if (chunk_indexes == MY_EOS) {
+            // If MY_EOS is received, stop the thread
             active = false;
         }
 
@@ -193,8 +193,8 @@ void merge_worker(
 
         std::pair<uint,uint> chunk_indexes = thread_queue.pop();
 
-        if (chunk_indexes == EOS) {
-            // EOS received, stop thread
+        if (chunk_indexes == MY_EOS) {
+            // MY_EOS received, stop thread
             active = false;
         }
 
@@ -256,7 +256,7 @@ void contraction_worker(
     MyQueue<std::pair<uint,uint>>& thread_queue,
     MyQueue<short>& feedback,
     std::vector<MyEdge>& global_edges,
-    std::set<MyEdge>& MST
+    std::atomic<int>& MST_weight
 ) {
 
     bool active = true;
@@ -268,8 +268,8 @@ void contraction_worker(
 
         std::pair<uint,uint> chunk_indexes = thread_queue.pop();
 
-        if (chunk_indexes == EOS) {
-            // EOS received, terminating
+        if (chunk_indexes == MY_EOS) {
+            // MY_EOS received, terminating
             active = false;
         }
 
@@ -296,8 +296,8 @@ void contraction_worker(
                          * If not, this means that we can unify the two trees 
                          */
                         initialComponents.unite(edge.from, edge.to);
-                        // Find a way to insert in MST
-                        // MST.insert(edge);
+                        // MST_weight.fetch_add(edge.weight);
+                        // MST_weight += edge.weight;
                     }
                     else {
                         /**
@@ -352,8 +352,8 @@ void filter_edge_worker(
 
         std::pair<uint,uint> chunk_indexes = thread_queue.pop();
 
-        if (chunk_indexes == EOS) {
-            // EOS received, thread finishing
+        if (chunk_indexes == MY_EOS) {
+            // MY_EOS received, thread finishing
             active = false;
         }
 
@@ -375,7 +375,6 @@ void filter_edge_worker(
                      * Otherwise we discard it.
                      */
                     remaining_edges.push_back(edge);
-                    // remaining_edges[i] = edge;
             }
 
             feedback.push(id);
@@ -421,8 +420,8 @@ void filter_node_worker(
 
         std::pair<uint,uint> chunk_indexes = thread_queue.pop();
 
-        if (chunk_indexes == EOS) {
-            // EOS received, thread finishing
+        if (chunk_indexes == MY_EOS) {
+            // MY_EOS received, thread finishing
             active = false;
         }
 
@@ -442,7 +441,6 @@ void filter_node_worker(
                      * Otherwise it is a child of another node and we can discard it.
                      */
                     remaining_nodes.push_back(i);
-                    // remaining_nodes[i] = graph.nodes[i];
                 
             }   
 
