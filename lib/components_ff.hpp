@@ -12,6 +12,15 @@
  * 
  */
 
+/**
+ * @brief Struct Task_t: used to pass object between farm in first Map stage.
+ * 
+ * @param chunk         Starting and ending indexes of chunk to compute.
+ * @param graph         The graph structure.
+ * @param i             The thread id.
+ * @param local_edge    The local edge found to be modified
+ * 
+ */
 struct Task_t {
 
     std::pair<uint, uint> chunk;
@@ -19,6 +28,7 @@ struct Task_t {
     int i;
     std::vector<MyEdge>& local_edge;
 
+    // We allocate space for local_edge in the constructor
     Task_t(
         std::pair<uint,uint> chunk,
         Graph graph,
@@ -30,7 +40,15 @@ struct Task_t {
 
 };
 
-//! emitter node for evaluate stage
+/**
+ * @brief               Emitter: used to distribute edges indexes to threads and compute last chunk
+ * 
+ * @param list_size     Number of edges to distribute
+ * @param num_w         The number of workers at our disposal
+ * @param graph         The graph structure to access
+ * @param local_edges   Vector of vectors storing the minimum edges found by each thread
+ * 
+ */
 struct Emitter : ff::ff_monode_t<Task_t> {
 
     uint list_size;
@@ -59,12 +77,11 @@ struct Emitter : ff::ff_monode_t<Task_t> {
             // The ending one is n if the workers are enough, otherwise the chunk_dim computed before
             size_t end = std::min(chunk_dim, static_cast<size_t>(list_size));
 
-
+            // If only 1 worker, we let the emitter compute all the edges
             if (this->num_w == 1) {
                 std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                std::cout << chunk.first << "," << chunk.second << std::endl;
 
-                // Only one worker, simply compute locally
+                // Dispatch task to the single node
                 Task_t *task = new Task_t(chunk, graph, 0, std::ref(local_edges[0]));
 
                 this->ff_send_out(task, 0);
@@ -77,12 +94,12 @@ struct Emitter : ff::ff_monode_t<Task_t> {
 
             else {
 
+                // Otherwise, distribute chunks between workers
                 for (auto i = 0; i < num_w ; i++) {
 
                     std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                    std::cout << chunk.first << "," << chunk.second << std::endl;
 
-                    // Only one worker, simply compute locally
+                    // Dispatch task to thread i
                     Task_t *task = new Task_t(chunk, graph, i, std::ref(local_edges[i]));
 
                     this->ff_send_out(task, i);
@@ -97,12 +114,9 @@ struct Emitter : ff::ff_monode_t<Task_t> {
                 }
 
                 this->broadcast_task(this->EOS);
-
+         
                 begin = end;
-                // Same as before for the ending index
                 end = static_cast<size_t>(list_size);
-
-                std::cout << begin << "," << end << std::endl;
 
                 uint last_index = this->local_edges.size()-1;
 
@@ -136,8 +150,10 @@ struct Emitter : ff::ff_monode_t<Task_t> {
 };
 
 
-
-//! worker node for Evaluate stage
+/**
+ * @brief MapWorker: fastflow worker to compute minimum local edges
+ * 
+ */
 struct MapWorker : ff::ff_node_t<Task_t> {
 
     Task_t *svc(Task_t *in) {
@@ -164,11 +180,14 @@ struct MapWorker : ff::ff_node_t<Task_t> {
 };
 
 /**
+ * @brief Struct Task_t: used to pass object between farm in first Map stage.
  * 
- * MERGE STRUCTURES
+ * @param chunk         Starting and ending indexes of chunk to compute.
+ * @param graph         The graph structure.
+ * @param i             The thread id.
+ * @param local_edge    The local edge found to be modified
  * 
  */
-
 struct MergeTask_t {
 
     std::pair<uint, uint> chunk;
@@ -186,8 +205,15 @@ struct MergeTask_t {
 };
 
 
-
-//! emitter node for evaluate stage
+/**
+ * @brief               MergeEmitter: used to distribute indexes to threads and compute last chunk
+ * 
+ * @param list_size     Number of indexes to distribute
+ * @param num_w         The number of workers at our disposal
+ * @param local_edges   The minimum local_edges found by each thread in the previou stage
+ * @param global_edges  The final vector to store the result
+ * 
+ */
 struct MergeEmitter : ff::ff_monode_t<MergeTask_t> {
 
     uint list_size;
@@ -221,8 +247,7 @@ struct MergeEmitter : ff::ff_monode_t<MergeTask_t> {
 
             if (this->num_w == 1) {
                 std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                std::cout << chunk.first << "," << chunk.second << std::endl;
-                // Only one worker, simply compute locally
+                // Dispatch task to the single node 
                 MergeTask_t *task = new MergeTask_t(chunk, 0, local_edges, std::ref(this->global_edges));
 
                 this->ff_send_out(task, 0);
@@ -238,8 +263,8 @@ struct MergeEmitter : ff::ff_monode_t<MergeTask_t> {
                 for (auto i = 0; i < num_w - 1; i++) {
 
                     std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                    std::cout << chunk.first << "," << chunk.second << std::endl;
                     
+                    //Dispatch task to the worker
                     MergeTask_t *task = new MergeTask_t(chunk, i, local_edges, std::ref(this->global_edges));
 
                     this->ff_send_out(task, i);
@@ -258,8 +283,6 @@ struct MergeEmitter : ff::ff_monode_t<MergeTask_t> {
                 begin = end;
                 // Same as before for the ending index
                 end = static_cast<size_t>(list_size);
-
-                std::cout << begin << "," << end << std::endl;
 
                 // For each local_edge of each thread
                 for (auto &local_edge : local_edges) {
@@ -293,8 +316,10 @@ struct MergeEmitter : ff::ff_monode_t<MergeTask_t> {
 };
 
 
-
-//! worker node for Evaluate stage
+/**
+ * @brief MapWorker: fastflow worker to select minimum among the local_edges indexes
+ * 
+ */
 struct MergeWorker : ff::ff_node_t<MergeTask_t> {
 
     MergeTask_t *svc(MergeTask_t *in) {
@@ -328,7 +353,16 @@ struct MergeWorker : ff::ff_node_t<MergeTask_t> {
 
 /**
  * 
- * CONTRACTION STRUCTURE
+ * CONTRACTION STRUCTURES
+ * 
+ */
+/**
+ * @brief                   Struct ContractionTask_t: used to pass object between farm in the contraction phase.
+ * 
+ * @param chunk             Starting and ending indexes of chunk to compute.
+ * @param i                 The thread id.
+ * @param global_edge       The minimum global edges computed in the latter step.
+ * @param initialComponents The UNION-FIND data structure to be modified
  * 
  */
 struct ContractionTask_t {
@@ -348,8 +382,15 @@ struct ContractionTask_t {
 };
 
 
-
-//! emitter node for evaluate stage
+/**
+ * @brief                   ContractionEmitter: used to distribute indexes to threads and compute last chunk
+ * 
+ * @param list_size         Number of indexes to distribute
+ * @param num_w             The number of workers at our disposal
+ * @param global_edges      The vector of minimum edges found in the previous step
+ * @param initialComponents The UNION-FIND data structure to be modified
+ * 
+ */
 struct ContractionEmitter : ff::ff_monode_t<ContractionTask_t> {
 
     uint list_size;
@@ -382,9 +423,8 @@ struct ContractionEmitter : ff::ff_monode_t<ContractionTask_t> {
 
             if (this->num_w == 1) {
                 std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                std::cout << chunk.first << "," << chunk.second << std::endl;
 
-                // Only one worker, simply compute locally
+                // Dispatch task to the single node
                 ContractionTask_t *task = new ContractionTask_t(chunk, 0, this->global_edges, std::ref(initialComponents));
 
                 this->ff_send_out(task, 0);
@@ -400,8 +440,8 @@ struct ContractionEmitter : ff::ff_monode_t<ContractionTask_t> {
                 for (auto i = 0; i < num_w - 1; i++) {
 
                     std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                    std::cout << chunk.first << "," << chunk.second << std::endl;
 
+                    // Dispatch task to thread i
                     ContractionTask_t *task = new ContractionTask_t(chunk, i, this->global_edges, std::ref(initialComponents));
 
                     this->ff_send_out(task, i);
@@ -420,8 +460,6 @@ struct ContractionEmitter : ff::ff_monode_t<ContractionTask_t> {
                 begin = end;
                 // Same as before for the ending index
                 end = static_cast<size_t>(list_size);
-
-                std::cout << begin << "," << end << std::endl;
                     
                 // Iterate through the indexes interval received
                 for (uint i = begin; i < end; i++) {
@@ -468,8 +506,10 @@ struct ContractionEmitter : ff::ff_monode_t<ContractionTask_t> {
 };
 
 
-
-//! worker node for Evaluate stage
+/**
+ * @brief ContractionWorker: fastflow worker to unify disjoint trees
+ * 
+ */
 struct ContractionWorker : ff::ff_node_t<ContractionTask_t> {
 
     ContractionTask_t *svc(ContractionTask_t *in) {
@@ -521,6 +561,16 @@ struct ContractionWorker : ff::ff_node_t<ContractionTask_t> {
  * FILTERING STRUCTURES
  * 
  */
+/**
+ * @brief                       Struct FilteringTask_t: used to pass object between farm in the filtering phase.
+ * 
+ * @param chunk                 Starting and ending indexes of chunk to compute.
+ * @param i                     The thread id.
+ * @param graph                 The graph data structure
+ * @param remaining_local_edges The vector where to store remaning edges needed to be processed
+ * @param initialComponents     The UNION-FIND data structure to be modified
+ * 
+ */
 struct FilteringTask_t {
 
     std::pair<uint, uint> chunk;
@@ -540,8 +590,16 @@ struct FilteringTask_t {
 };
 
 
-
-//! emitter node for evaluate stage
+/**
+ * @brief                       FilterEdgeEmitter: used to distribute indexes to workers
+ * 
+ * @param list_size             Indexes to be processed
+ * @param num_w                 The workers at our disposal.
+ * @param graph                 The graph data structure
+ * @param initialComponents     The UNION-FIND data structure to be modified
+ * @param remaining_edges       The vector of vectors where to store the remaining edges
+ * 
+ */
 struct FilterEdgeEmitter : ff::ff_monode_t<FilteringTask_t> {
 
     uint list_size;
@@ -575,9 +633,7 @@ struct FilterEdgeEmitter : ff::ff_monode_t<FilteringTask_t> {
 
             if (this->num_w == 1) {
                 std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                std::cout << begin << "," << end << std::endl;
 
-                // Only one worker, simply compute locally
                 FilteringTask_t *task = new FilteringTask_t(chunk, 0, std::ref(graph), std::ref(this->remaining_edges[0]), std::ref(initialComponents));
 
                 this->ff_send_out(task, 0);
@@ -593,7 +649,6 @@ struct FilterEdgeEmitter : ff::ff_monode_t<FilteringTask_t> {
                 for (auto i = 0; i < num_w - 1; i++) {
 
                     std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                    std::cout << begin << "," << end << std::endl;
 
                     FilteringTask_t *task = new FilteringTask_t(chunk, i, std::ref(graph), std::ref(this->remaining_edges[i]), std::ref(initialComponents));
 
@@ -613,8 +668,6 @@ struct FilterEdgeEmitter : ff::ff_monode_t<FilteringTask_t> {
                 begin = end;
                 // Same as before for the ending index
                 end = static_cast<size_t>(list_size);
-
-                std::cout << begin << "," << end << std::endl;
 
                 uint last_index = this->remaining_edges.size() - 1;
                     
@@ -646,8 +699,10 @@ struct FilterEdgeEmitter : ff::ff_monode_t<FilteringTask_t> {
 };
 
 
-
-//! worker node for Evaluate stage
+/**
+ * @brief FilterEdgeWorker: fastflow worker to check for remaining edge
+ * 
+ */
 struct FilterEdgeWorker : ff::ff_node_t<FilteringTask_t> {
 
     FilteringTask_t *svc(FilteringTask_t *in) {
@@ -682,6 +737,16 @@ struct FilterEdgeWorker : ff::ff_node_t<FilteringTask_t> {
  * FILTERING STRUCTURES
  * 
  */
+/**
+ * @brief                       Struct FilteringNodeTask_t: used to pass object between farm in the filtering node phase.
+ * 
+ * @param chunk                 Starting and ending indexes of chunk to compute.
+ * @param i                     The thread id.
+ * @param graph                 The graph data structure
+ * @param remaining_local_nodes The vector where to store remaning nodes needed to be processed
+ * @param initialComponents     The UNION-FIND data structure to be modified
+ * 
+ */
 struct FilteringNodeTask_t {
 
     std::pair<uint, uint> chunk;
@@ -701,8 +766,16 @@ struct FilteringNodeTask_t {
 };
 
 
-
-//! emitter node for evaluate stage
+/**
+ * @brief                       FilterNodeEmitter: used to distribute indexes to workers
+ * 
+ * @param list_size             Indexes to be processed
+ * @param num_w                 The workers at our disposal.
+ * @param graph                 The graph data structure
+ * @param initialComponents     The UNION-FIND data structure to be modified
+ * @param remaining_nodes       The vector of vectors where to store the remaining nodes
+ * 
+ */
 struct FilterNodeEmitter : ff::ff_monode_t<FilteringNodeTask_t> {
 
     uint list_size;
@@ -736,9 +809,7 @@ struct FilterNodeEmitter : ff::ff_monode_t<FilteringNodeTask_t> {
 
             if (this->num_w == 1) {
                 std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                std::cout << begin << "," << end << std::endl;
 
-                // Only one worker, simply compute locally
                 FilteringNodeTask_t *task = new FilteringNodeTask_t(chunk, 0, std::ref(graph), std::ref(this->remaining_nodes[0]), std::ref(initialComponents));
 
                 this->ff_send_out(task, 0);
@@ -754,7 +825,6 @@ struct FilterNodeEmitter : ff::ff_monode_t<FilteringNodeTask_t> {
                 for (auto i = 0; i < num_w - 1; i++) {
 
                     std::pair<uint, uint> chunk = std::make_pair(begin, end);
-                    std::cout << begin << "," << end << std::endl;
 
                     FilteringNodeTask_t *task = new FilteringNodeTask_t(chunk, i, std::ref(graph), std::ref(this->remaining_nodes[i]), std::ref(initialComponents));
 
@@ -774,18 +844,17 @@ struct FilterNodeEmitter : ff::ff_monode_t<FilteringNodeTask_t> {
                 begin = end;
                 // Same as before for the ending index
                 end = static_cast<size_t>(list_size);
-                std::cout << begin << "," << end << std::endl;
 
                 uint last_index = this->remaining_nodes.size() - 1;
                     
                 for (uint i = begin; i < end; i++) {
                 
                     if ( initialComponents.parent(graph.nodes[i]) == graph.nodes[i] ) 
-                    /**
-                     * If the parent node is the same as the node itself, then we need to keep it also 
-                     * for next iteration.
-                     * Otherwise it is a child of another node and we can discard it.
-                     */
+                        /**
+                         * If the parent node is the same as the node itself, then we need to keep it also 
+                         * for next iteration.
+                         * Otherwise it is a child of another node and we can discard it.
+                         */
                         this->remaining_nodes[last_index].push_back(i);
 
                 }
@@ -805,8 +874,10 @@ struct FilterNodeEmitter : ff::ff_monode_t<FilteringNodeTask_t> {
 };
 
 
-
-//! worker node for Evaluate stage
+/**
+ * @brief FilterNodeWorker: fastflow worker to compute remaining nodes
+ * 
+ */
 struct FilterNodeWorker : ff::ff_node_t<FilteringNodeTask_t> {
 
     FilteringNodeTask_t *svc(FilteringNodeTask_t *in) {

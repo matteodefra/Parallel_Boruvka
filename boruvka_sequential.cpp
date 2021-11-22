@@ -9,7 +9,7 @@
 int main(int argc, char *argv[]) {
 
     if (argc != 4) {
-        std::cout << "Usage ./[executable] number_nodes number_edges filename" << std::endl;
+        std::cout << "Usage ./[executable] number_nodes number_edges filename iters" << std::endl;
         return (0);
     }
 
@@ -36,10 +36,6 @@ int main(int argc, char *argv[]) {
     int iter = 0;
 
     long total_time = 0;
-
-    std::cout << "Total nodes in the graph: " << graph.getNumNodes() << std::endl;
-
-    std::cout << "Total edges in the graph: " << graph.getNumEdges() << std::endl;
     
     while (graph.getNumNodes() != 1) {
 
@@ -134,19 +130,6 @@ int main(int argc, char *argv[]) {
 
 
         total_time += map_time + contraction_time + filtering_edge_time + filtering_node_time; 
-        
-        std::cout << std::endl;
-
-        std::cout << "Edges remaining" << std::endl;
-
-        std::cout << "Size: " << remaining_edges.size() << std::endl;
-
-        std::cout << std::endl;
-
-        std::cout << "Node remaining" << std::endl;
-
-        std::cout << "Size: " << remaining_nodes.size() << std::endl;
-
 
         graph.updateNodes(std::ref(remaining_nodes));
         graph.updateEdges(std::ref(remaining_edges));
@@ -155,20 +138,10 @@ int main(int argc, char *argv[]) {
 
     }   
 
-    for (uint j = 0; j < initialComponents.mData.size(); j++) {
-        if (initialComponents.parent(j) == j) {
-            std::cout << "Found same parent" << std::endl;
-        }
-    }
-
-    std::cout << "Computation finished" << std::endl;
-
     std::cout << "Total iters: " << iter << std::endl;
 
     std::cout << "Total time required: " << total_time << " usec" << std::endl;
      
-    std::cout << "Total weight of MST: " << MST_weight.load() << std::endl;
-
     return (0);
 
 }

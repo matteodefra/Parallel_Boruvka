@@ -40,7 +40,7 @@ test_seq:
 	$(PRELDFLAGS) ./build/boruvka_sequential 10 20 "V1000_E10000.txt"
 
 test_par:
-	$(PRELDFLAGS) ./build/boruvka_parallel_thread 4 10 20 "V1000_E10000.txt"
+	$(PRELDFLAGS) ./build/boruvka_parallel_thread 6 10 20 "V1000_E10000.txt"
 
 test_ff:
-	$(PRELDFLAGS) ./build/boruvka_fastflow 4 10 20 "V1000_E10000.txt"
+	$(PRELDFLAGS) ./build/boruvka_fastflow 3 10 20 "V1000_E10000.txt"
