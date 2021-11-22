@@ -160,15 +160,15 @@ class Graph {
             this->nodes.assign(nodes.begin(), nodes.end());
             this->edges.assign(edges.begin(), edges.end());
 
-            std::ofstream file ("graph.txt");
+            // std::ofstream file ("graph.txt");
 
-            if (file.is_open()) {
-                for (auto &edge : this->edges) {
-                    file << edge.from << " " << edge.to << " " << edge.weight << "\n";
-                }
-            }
+            // if (file.is_open()) {
+            //     for (auto &edge : this->edges) {
+            //         file << edge.from << " " << edge.to << " " << edge.weight << "\n";
+            //     }
+            // }
 
-            file.close();
+            // file.close();
 
             this->originalNodes = this->nodes.size();
 

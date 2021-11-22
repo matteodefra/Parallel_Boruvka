@@ -12,6 +12,7 @@
 
 int main(int argc, char *argv[]) {
 
+    // Setting up initial stage
     if (argc != 5) {
         std::cout << "Usage ./[executable] nw number_nodes number_edges filename" << std::endl;
         return (0);
@@ -24,8 +25,6 @@ int main(int argc, char *argv[]) {
     uint num_edges = std::atoi(argv[3]);
 
     std::string filename = std::string(argv[4]);
-
-    std::cout << "Num workers: " << num_w << std::endl;
 
     Graph graph = Graph();
 
@@ -68,6 +67,9 @@ int main(int argc, char *argv[]) {
 
         long map_time;
 
+        /**
+         * Farm for the map phase
+         */
         {
             Utimer timer("map ff", &map_time);
 
@@ -99,6 +101,9 @@ int main(int argc, char *argv[]) {
 
         long merge_time;
 
+        /**
+         * Farm for the merge phase
+         */
         {
             Utimer timer("merge ff", &merge_time);
 
@@ -132,6 +137,9 @@ int main(int argc, char *argv[]) {
 
         long contraction_time;
 
+        /**
+         * Farm for the contraction phase
+         */
         {
             Utimer timer("contraction ff", &contraction_time);
 
@@ -163,6 +171,9 @@ int main(int argc, char *argv[]) {
 
         long filtering_edge_time;
 
+        /**
+         * Farm for the edge filtering phase
+         */
         {
             Utimer timer("filtering edges ff", &filtering_edge_time);
 
@@ -194,6 +205,9 @@ int main(int argc, char *argv[]) {
 
         long filtering_node_time;
 
+        /**
+         * Farm for the node filtering phase
+         */
         {
             Utimer timer("filtering nodes ff", &filtering_node_time);
 
@@ -226,33 +240,12 @@ int main(int argc, char *argv[]) {
 
         total_time += map_time + merge_time + contraction_time + filtering_edge_time + filtering_node_time + filtering_time; 
 
-        std::cout << std::endl;
-
-        std::cout << "Edges remaining" << std::endl;
-
-        std::cout << "Size: " << remaining_edges.size() << std::endl;
-
-        std::cout << std::endl;
-
-        std::cout << "Node remaining" << std::endl;
-
-        std::cout << "Size: " << remaining_nodes.size() << std::endl;
-
-
         graph.updateNodes(std::ref(remaining_nodes));
         graph.updateEdges(std::ref(remaining_edges));
 
         iter += 1;
 
     }
-
-    for (uint j = 0; j < initialComponents.mData.size(); j++) {
-        if (initialComponents.parent(j) == j) {
-            std::cout << "Found same parent" << std::endl;
-        }
-    }
-
-    std::cout << "Computation finished" << std::endl;
 
     std::cout << "Total iters: " << iter << std::endl;
 

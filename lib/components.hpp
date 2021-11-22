@@ -53,7 +53,6 @@ void emitter(
         // Create pair for the index in the edges vector
         std::pair<uint, uint> chunk (begin, end);
 
-        std::cout << chunk.first << "," << chunk.second << std::endl;
         // Push the pair in the correspoding queue
         queues[i].push(std::move(chunk));
         // Update begin index
@@ -77,7 +76,6 @@ void emitter(
         else {
             // New pair to store into the queue
             std::pair<uint, uint> chunk (begin, end);
-            std::cout << chunk.first << "," << chunk.second << std::endl;
             queues[thread_id].push(std::move(chunk));
             // Updating begin and ending indexes
             begin = end;
