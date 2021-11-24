@@ -27,6 +27,15 @@ class Graph {
 
         ~Graph() {}
 
+        // Parameterized Constructors for
+        // for implementing deep copy
+        Graph(Graph& sample)
+        {
+            this->nodes = sample.nodes;
+            this->edges = sample.edges;
+            this->originalNodes = sample.originalNodes;
+        }
+
 
         std::vector<uint> getNodes() {
             return this->nodes;
@@ -59,7 +68,7 @@ class Graph {
          */ 
         void loadGraph(std::string filename) {
 
-            std::ifstream infile("data/" + filename);
+            std::ifstream infile(filename);
 
             const int MIN = -1;
             const int MAX = 1;
@@ -77,11 +86,18 @@ class Graph {
 
                 float weight = c + variance;
 
-                edges.insert({a, b, weight});
-                edges.insert({b, a, weight});
+                if (filename == "data/sc-rel9.edges") {
+                    a = a-1;
+                    b = b-1;
+                }
 
-                nodes.insert(a);
-                nodes.insert(b);
+                if (a != b) {
+                    edges.insert({a, b, weight});
+                    edges.insert({b, a, weight});
+
+                    nodes.insert(a);
+                    nodes.insert(b);
+                }
 
             }
 
@@ -97,9 +113,9 @@ class Graph {
         /**
          * @brief Create graph object, by filling the vector of Edge above
          */ 
-        void loadGraphUnweighted() {
+        void loadGraphUnweighted(std::string filename) {
 
-            std::ifstream infile("data/inf-openflights.edges");
+            std::ifstream infile(filename);
 
             const int MIN = 0;
             const int MAX = 10;
@@ -114,11 +130,18 @@ class Graph {
 
                 float weight = MIN + (double)(rand()) / ((double)(RAND_MAX/(MAX - MIN)));
 
-                edges.insert({a, b, weight});
-                edges.insert({b, a, weight});
+                a = a-1;
+                b = b-1;
 
-                nodes.insert(a);
-                nodes.insert(b);
+                if (a != b) {
+
+                    edges.insert({a, b, weight});
+                    edges.insert({b, a, weight});
+
+                    nodes.insert(a);
+                    nodes.insert(b);
+
+                }
 
             }
 
@@ -160,15 +183,15 @@ class Graph {
             this->nodes.assign(nodes.begin(), nodes.end());
             this->edges.assign(edges.begin(), edges.end());
 
-            // std::ofstream file ("graph.txt");
+            std::ofstream file ("graph.txt");
 
-            // if (file.is_open()) {
-            //     for (auto &edge : this->edges) {
-            //         file << edge.from << " " << edge.to << " " << edge.weight << "\n";
-            //     }
-            // }
+            if (file.is_open()) {
+                for (auto &edge : this->edges) {
+                    file << edge.from << " " << edge.to << " " << edge.weight << "\n";
+                }
+            }
 
-            // file.close();
+            file.close();
 
             this->originalNodes = this->nodes.size();
 
