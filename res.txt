@@ -1,6 +1,0 @@
-XEON Phi
-
-V100000_E10000000 
-test_seq: 1820866 usec
-test_par (128 th): 1619301 usec
-test_ff (8 th): 2662875 usec
