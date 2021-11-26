@@ -3,3 +3,6 @@ report/*
 !report/report.pdf
 /build
 /jemalloc
+/results
+/papers
+/old

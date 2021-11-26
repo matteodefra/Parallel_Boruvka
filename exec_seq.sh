@@ -16,5 +16,5 @@ filename=$3
 
 # loop to increase the parallelism degree
 # loop for multiple independent iterations to reduce variance
-./$1 $num_nodes $num_edges $filename $iter >> execution_seq.txt
+./$1 $num_nodes $num_edges $filename $iter >> results/execution_"$1".txt;
 # grep "Total time required" | awk -v iter=$iter -v par=$par '{sum += $4} END {print sprintf("%s,%s", par, sum/iter)}'

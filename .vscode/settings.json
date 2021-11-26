@@ -68,7 +68,14 @@
         "unordered_set": "cpp",
         "cfenv": "cpp",
         "strstream": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "csignal": "cpp",
+        "any": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "forward_list": "cpp",
+        "regex": "cpp",
+        "slist": "cpp"
     },
     "cmake.configureOnOpen": false
 }
