@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
                         std::pair<uint, uint> chunk_indexes = {begin, end};
                         auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                             return mapwork(std::ref(local_edges), std::ref(graph), std::move( chunk_indexes ), 0);
-                        });
+                        }, 0);
 
                         mapfutures.push_back(std::move(f1));
                     }
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
                             std::pair<uint, uint> chunk_indexes = {begin, end};
                             auto f1 = pool.enqueue([&, chunk_indexes, i]() -> int {
                                 return mapwork(std::ref(local_edges), std::ref(graph), std::move( chunk_indexes ), i);
-                            });
+                            }, i);
                             
                             mapfutures.push_back(std::move(f1));
 
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]) {
                         std::pair<uint, uint> chunk_indexes = {begin, end};
                         auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                             return mergework(std::ref(local_edges), std::ref(global_edges), std::move( chunk_indexes ));
-                        });
+                        }, 0);
 
                         mergefutures.push_back(std::move(f1));
                     }
@@ -326,7 +326,7 @@ int main(int argc, char *argv[]) {
                             std::pair<uint, uint> chunk_indexes = {begin, end};
                             auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                                 return mergework(std::ref(local_edges), std::ref(global_edges), std::move(chunk_indexes));
-                            });
+                            }, std::move(i));
 
                             mergefutures.push_back(std::move(f1));
                             
@@ -373,7 +373,7 @@ int main(int argc, char *argv[]) {
                         std::pair<uint, uint> chunk_indexes = {begin, end};
                         auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                             return contractionwork(std::ref(global_edges), std::ref(initialComponents), std::ref(graph), std::move( chunk_indexes ));
-                        });
+                        }, 0);
 
                         contractionfutures.push_back(std::move(f1));
                     }
@@ -383,7 +383,7 @@ int main(int argc, char *argv[]) {
                             std::pair<uint, uint> chunk_indexes = {begin, end};
                             auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                                 return contractionwork(std::ref(global_edges), std::ref(initialComponents), std::ref(graph), std::move( chunk_indexes ));
-                            });
+                            }, std::move(i));
 
                             contractionfutures.push_back(std::move(f1));
                             
@@ -434,7 +434,7 @@ int main(int argc, char *argv[]) {
                         std::pair<uint, uint> chunk_indexes = {begin, end};
                         auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                             return filteringedgework(std::ref(selected_edges), std::ref(initialComponents), std::ref(graph), std::move( chunk_indexes ), 0);
-                        });
+                        }, 0);
 
                         filtering_edgefutures.push_back(std::move(f1));
                     }
@@ -444,7 +444,7 @@ int main(int argc, char *argv[]) {
                             std::pair<uint, uint> chunk_indexes = {begin, end};
                             auto f1 = pool.enqueue([&, chunk_indexes, i]() -> int {
                                 return filteringedgework(std::ref(selected_edges), std::ref(initialComponents), std::ref(graph), std::move( chunk_indexes ), i);
-                            });
+                            }, std::move(i));
 
                             filtering_edgefutures.push_back(std::move(f1));
                             
@@ -490,7 +490,7 @@ int main(int argc, char *argv[]) {
                         std::pair<uint, uint> chunk_indexes = {begin, end};
                         auto f1 = pool.enqueue([&, chunk_indexes]() -> int {
                             return filteringnodework(std::ref(selected_nodes), std::ref(initialComponents), std::ref(graph), std::move( chunk_indexes ), 0);
-                        });
+                        }, 0);
 
                         filtering_nodefutures.push_back(std::move(f1));
                     }
@@ -500,7 +500,7 @@ int main(int argc, char *argv[]) {
                             std::pair<uint, uint> chunk_indexes = {begin, end};
                             auto f1 = pool.enqueue([&, chunk_indexes, i]() -> int {
                                 return filteringnodework(std::ref(selected_nodes), std::ref(initialComponents), std::ref(graph), std::move( chunk_indexes ), i);
-                            });
+                            }, std::move(i));
 
                             filtering_nodefutures.push_back(std::move(f1));
                             
@@ -559,6 +559,9 @@ int main(int argc, char *argv[]) {
         }
 
         iters = std::atoi(argv[5]);
+
+        // Close threadpool
+        
 
     }
 

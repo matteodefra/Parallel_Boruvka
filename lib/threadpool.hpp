@@ -14,9 +14,16 @@ class ThreadPool final {
     public:
 
         explicit ThreadPool(std::size_t nthreads) :
-            m_enabled(true),
+            nthreads(nthreads),
+            m_mu(nthreads),
+            m_cv(nthreads),
+            m_enabled(nthreads),
+            m_tasks(nthreads),
             m_pool(nthreads) {
-            run();
+                for (uint i = 0; i < nthreads; i++) 
+                    m_enabled[i] = true;
+                for (uint i = 0; i < nthreads; i++) 
+                    run(i);
         }
 
         ~ThreadPool() {
@@ -27,7 +34,7 @@ class ThreadPool final {
         ThreadPool& operator=(const ThreadPool&) = delete;
 
         template<class TaskT>
-        auto enqueue(TaskT task) -> std::future<decltype(task())>
+        auto enqueue(TaskT task, int index) -> std::future<decltype(task())>
         {
             using ReturnT = decltype(task());
             auto promise = std::make_shared<std::promise<ReturnT>>();
@@ -36,23 +43,24 @@ class ThreadPool final {
             auto t = [p = std::move(promise), t = std::move(task)] () mutable { execute(*p, t); };
 
             {
-                std::lock_guard<std::mutex> lock(m_mu);
-                m_tasks.push(std::move(t));
+                std::lock_guard<std::mutex> lock(m_mu[index]);
+                m_tasks[index].push(std::move(t));
             }
 
-            m_cv.notify_one();
+            m_cv[index].notify_one();
 
             return result;
         }
 
     private:
 
-        std::mutex m_mu;
-        std::condition_variable m_cv;
+        uint nthreads;
+        std::vector<std::mutex> m_mu;
+        std::vector<std::condition_variable> m_cv;
 
-        bool m_enabled;
+        std::vector<bool> m_enabled;
         std::vector<std::thread> m_pool;
-        std::queue<std::function<void()>> m_tasks;
+        std::vector<std::queue<std::function<void()>>> m_tasks;
 
         template<class ResultT, class TaskT>
         static void execute(std::promise<ResultT>& p, TaskT& task) {
@@ -66,37 +74,40 @@ class ThreadPool final {
         }
 
         void stop() {
-            {
-                std::lock_guard<std::mutex> lock(m_mu);
-                m_enabled = false;
+
+            for (uint i=0; i<nthreads; i++) {
+                {
+                    std::lock_guard<std::mutex> lock(m_mu[i]);
+                    m_enabled[i] = false;
+                }
+
+                m_cv[i].notify_all();
+
+                m_pool[i].join();
             }
-
-            m_cv.notify_all();
-
-            for (auto& t : m_pool)
-                t.join();
+                
         }
 
-        void run() {
-            auto f = [this] () {
+        void run(int index) {
+            auto f = [this] (int index) {
                 while (true) {
-                    std::unique_lock<std::mutex> lock{ m_mu };
-                    m_cv.wait(lock, [&] () { return !m_enabled || !m_tasks.empty(); });
+                    std::unique_lock<std::mutex> lock{ m_mu[index] };
+                    m_cv[index].wait(lock, [&] () { return !m_enabled[index] || !m_tasks[index].empty(); });
 
-                    if (!m_enabled)
+                    if (!m_enabled[index])
                         break;
 
-                    assert(!m_tasks.empty());
+                    assert(!m_tasks[index].empty());
 
-                    auto task = std::move(m_tasks.front());
-                    m_tasks.pop();
+                    auto task = std::move(m_tasks[index].front());
+                    m_tasks[index].pop();
 
                     lock.unlock();
                     task();
                 }
             };
 
-            for (auto& t : m_pool)
-                t = std::thread(f);
+            m_pool[index] = std::thread(f, index);
+
         }
 };
