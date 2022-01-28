@@ -22,10 +22,16 @@ class ThreadPool final {
             m_pool(nthreads) {
                 for (uint i = 0; i < nthreads; i++) 
                     m_enabled[i] = true;
-                for (uint i = 0; i < nthreads; i++) 
+                for (uint i = 0; i < nthreads; i++) {
                     run(i);
+                    cpu_set_t cpuset;
+                    CPU_ZERO(&cpuset);
+                    CPU_SET(i, &cpuset);
+                    int rc = pthread_setaffinity_np(m_pool[i].native_handle(), sizeof(cpu_set_t), &cpuset);
+                }
+    
         }
-
+        
         ~ThreadPool() {
             stop();
         }
