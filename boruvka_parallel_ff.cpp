@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
 
     for (int nw = 1; nw <= num_w; nw++) {
 
+        // Instantiate a ParallelFor
         ff::ParallelFor pf(nw);
 
         while (iters > 0) {

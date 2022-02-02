@@ -6,6 +6,10 @@
 #define STOP(timename,elapsed)  auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - timename).count();
 
 
+/**
+ * @brief Class Utimer to measure time with the RAII approach (Resourse acquisition is initialization)
+ * 
+ */
 class Utimer {
   
     using usecs = std::chrono::microseconds;

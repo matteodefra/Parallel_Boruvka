@@ -13,6 +13,17 @@
 #define MY_EOS std::pair<uint,uint> (0,0)
 
 
+/**
+ * @brief Compute minimum edges of the graph
+ * 
+ * @param local_edges Vector of vector of edges to modify saving the minimum edges found
+ * @param graph The graph accessed concurrently
+ * @param chunk_indexes The <starting,ending> integer pair of graph edges to inspect
+ * @param index The index of the corresponding thread
+ * @return int 
+ * 
+ * Loop through the assigned indexes chunk_indexes and modify the local_edges at the given index thread with the minimum edges found
+ */
 int mapwork(std::vector<std::vector<MyEdge>> &local_edges, Graph &graph, std::pair<uint, uint> chunk_indexes, uint index) {
 
     // local_edges.resize(graph.originalNodes);
@@ -43,6 +54,16 @@ int mapwork(std::vector<std::vector<MyEdge>> &local_edges, Graph &graph, std::pa
 }
 
 
+/**
+ * @brief Merge the previously local_edges
+ * 
+ * @param local_edges Vector of vector of minimum edges found by previous threads
+ * @param global_edges Global vector of minimum edges
+ * @param chunk_indexes The <starting,ending> integer pair to be modified by the thread
+ * @return int 
+ * 
+ * Each thread inspect the local_edges and update the global_edges vector with the minimum edge found previously 
+ */
 int mergework(std::vector<std::vector<MyEdge>> &local_edges, std::vector<MyEdge> &global_edges, std::pair<uint, uint> chunk_indexes) {
 
     // Get the indexes of the local_edges array
@@ -74,6 +95,19 @@ int mergework(std::vector<std::vector<MyEdge>> &local_edges, std::vector<MyEdge>
 }
 
 
+/**
+ * @brief Contract the union find data structure
+ * 
+ * @param global_edges The minimum vector of edges found in this iteration
+ * @param initialComponents The disjoint sets data structure
+ * @param graph The graph data structure
+ * @param chunk_indexes The <starting, ending> integer pair to inspect in the global_edges vector
+ * @return int 
+ * 
+ * Contract the union find data structure by calling the method same and unite. If the minimum edge found among node x and y have already the same 
+ * parent, then we don't do nothing. 
+ * Otherwise, we call unite to fuse together the two subtrees
+ */
 int contractionwork(std::vector<MyEdge> &global_edges, DisjointSets &initialComponents, Graph &graph, std::pair<uint, uint> chunk_indexes) {
 
     MyEdge NULL_CONN = {0,0,10};
@@ -117,6 +151,19 @@ int contractionwork(std::vector<MyEdge> &global_edges, DisjointSets &initialComp
 }
 
 
+/**
+ * @brief Filter the edges found previously
+ * 
+ * @param remaining_edges Vector of vector of edges to modify 
+ * @param initialComponents The disjoint set data structure
+ * @param graph The graph data structure
+ * @param chunk_indexes The <starting,ending> integer pair to inspect in the graph edges
+ * @param index The index of the corresponding thread
+ * @return int 
+ * 
+ * Loop through the edges of the graph and append the edge into the corresponding remaining_edges index if the node x and y linking the current edge does 
+ * not belong to the same component
+ */
 int filteringedgework(std::vector<std::vector<MyEdge>>& remaining_edges, DisjointSets &initialComponents, Graph &graph, std::pair<uint, uint> chunk_indexes, int index) {
 
     // Get the indexes 
@@ -142,6 +189,20 @@ int filteringedgework(std::vector<std::vector<MyEdge>>& remaining_edges, Disjoin
 
 }
 
+
+/**
+ * @brief Filter the nodes found previously
+ * 
+ * @param remaining_nodes Vector of vector of nodes to modify
+ * @param initialComponents The disjoint set data structure
+ * @param graph The graph data structure
+ * @param chunk_indexes The <starting,ending> integer pair to inspect in the graph nodes
+ * @param index The index of the corresponding thread
+ * @return int 
+ * 
+ * Inspect the given nodes indexes in the graph and check if the current node is itself a parent. 
+ * If it is so, we save it into the remanining_nodes (only the parent node matters)
+ */
 int filteringnodework(std::vector<std::vector<uint>>& remaining_nodes, DisjointSets &initialComponents, Graph &graph, std::pair<uint, uint> chunk_indexes, int index) {
 
     // Get the indexes 
@@ -210,6 +271,7 @@ int main(int argc, char *argv[]) {
 
     for (int nw = 1; nw <= num_w; nw++) {
 
+        // Instantiate the threadpool
         ThreadPool pool{nw};
 
         while (iters > 0) {
@@ -250,7 +312,6 @@ int main(int argc, char *argv[]) {
                     // The ending one is n if the workers are enough, otherwise the chunk_dim computed before
                     size_t end = nw != 1 ? std::min(chunk_dim, static_cast<size_t>(n)) : n;
 
-                    // std::cout << "First begin,end " << begin << "," << end << std::endl; 
 
                     if (nw == 1) {
                         std::pair<uint, uint> chunk_indexes = {begin, end};
@@ -263,6 +324,7 @@ int main(int argc, char *argv[]) {
                     else {
                         for (int i = 0; i < nw; i++) {
 
+                            // Compute the indexes and enqueue the task into the thread pool
                             std::pair<uint, uint> chunk_indexes = {begin, end};
                             auto f1 = pool.enqueue([&, chunk_indexes, i]() -> int {
                                 return mapwork(std::ref(local_edges), std::ref(graph), std::move( chunk_indexes ), i);
@@ -274,20 +336,18 @@ int main(int argc, char *argv[]) {
                                 // Last chunk
                                 begin = end;
                                 end = n;
-                                // std::cout << "begin,end " << begin << "," << end << std::endl; 
                             }
                             else {
                                 begin = end;
                                 end = std::min(begin + chunk_dim, static_cast<size_t>(n));
-                                // std::cout << "begin,end " << begin << "," << end << std::endl; 
                             }
 
                         }
                     }
 
+                    // Wait for all the thread to finish
                     for (auto &fut : mapfutures) {
                         int val = fut.get();
-                        // std::cout << val << std::endl;
                     }
 
                     
@@ -345,7 +405,6 @@ int main(int argc, char *argv[]) {
 
                     for (auto &fut : mergefutures) {
                         int val = fut.get();
-                        // std::cout << val << std::endl;
                     }
     
                 }
@@ -402,7 +461,6 @@ int main(int argc, char *argv[]) {
 
                     for (auto &fut : contractionfutures) {
                         int val = fut.get();
-                        // std::cout << val << std::endl;
                     }
     
                 }

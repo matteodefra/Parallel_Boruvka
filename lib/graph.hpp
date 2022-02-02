@@ -64,7 +64,7 @@ class Graph {
         }
 
         /**
-         * @brief Create graph object, by filling the vector of Edge above
+         * @brief Load graph from textfile, by filling the vector of Edges above
          */ 
         void loadGraph(std::string filename) {
 
@@ -111,7 +111,7 @@ class Graph {
 
 
         /**
-         * @brief Create graph object, by filling the vector of Edge above
+         * @brief Load unweighted graph from filename, by filling the vector of Edge above
          */ 
         void loadGraphUnweighted(std::string filename) {
 
@@ -154,7 +154,10 @@ class Graph {
 
         
 
-
+        /**
+         * @brief Randomly generate a graph given n nodes, and e edges
+         * 
+         */
         void generateGraph(int n, long unsigned int e /*vertices number*/) {
 
             const int MIN = 1;
@@ -183,15 +186,16 @@ class Graph {
             this->nodes.assign(nodes.begin(), nodes.end());
             this->edges.assign(edges.begin(), edges.end());
 
-            std::ofstream file ("graph.txt");
+            // // Uncomment this section to save the graph to textfile
+            // std::ofstream file ("graph.txt");
 
-            if (file.is_open()) {
-                for (auto &edge : this->edges) {
-                    file << edge.from << " " << edge.to << " " << edge.weight << "\n";
-                }
-            }
+            // if (file.is_open()) {
+            //     for (auto &edge : this->edges) {
+            //         file << edge.from << " " << edge.to << " " << edge.weight << "\n";
+            //     }
+            // }
 
-            file.close();
+            // file.close();
 
             this->originalNodes = this->nodes.size();
 

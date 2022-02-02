@@ -3,7 +3,7 @@
 
 /**
  * Implementations of the required components in the farm, such as 
- * the different emitters and the workers 
+ * the different emitters and the workers (OLD)
  */
 
 #include <iostream>
