@@ -3,7 +3,12 @@
 
 #include <iostream>
 
-
+/**
+ * @brief Struct consisting in an Edge object
+ * 
+ * Stores the starting, ending node and the weight of the given edge.
+ * Override of the equality operator, the greater operator and the cout operator
+ */
 struct MyEdge {
     uint from;
     uint to;

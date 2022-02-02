@@ -96,8 +96,6 @@ int main(int argc, char *argv[]) {
                              * If not, this means that we can unify the two trees 
                              */
                             initialComponents.unite(edge.from, edge.to);
-                            // MST_weight.fetch_add(edge.weight);
-                            // MST_weight += edge.weight;
                         }
                         else {
                             /**
