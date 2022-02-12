@@ -2,7 +2,6 @@
 #define __UTILS_H
 
 #include <iostream>
-
 /**
  * @brief Struct consisting in an Edge object
  * 
@@ -36,5 +35,28 @@ std::ostream& operator<<(std::ostream& os, const MyEdge& edge) {
     return os;
 
 }
+
+
+// float compute_MST(DisjointSets &initialComponents, Graph &graph) {
+
+//     std::vector<int> nodes;
+
+//     float weight = 0;
+
+//     for (int i = 0; i < initialComponents.mData.size(); i++) {
+//         if (i != initialComponents.parent(i)) {
+//             MyEdge edge = {i, initialComponents.parent(i), 10};
+//             for (auto &_edge : graph.edges) {
+//                 if (_edge == edge) {
+//                     weight += _edge.weight;
+//                 }
+//             }
+//         }
+//     }
+
+//     return weight;
+
+// }
+
 
 #endif
