@@ -10,7 +10,7 @@ INCLUDES	= -I $(FF_ROOT)
 CXXFLAGS  	= -g # -DBLOCKING_MODE -DFF_BOUNDED_BUFFER
 
 LDFLAGS 	= -pthread
-OPTFLAGS	= -O3 -finline-functions -w -DNDEBUG
+OPTFLAGS	= -finline-functions -w -DNDEBUG -O3
 
 PRELDFLAGS 	= LD_PRELOAD=${DIR}/jemalloc/lib/libjemalloc.so.2
 
