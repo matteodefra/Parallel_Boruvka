@@ -37,26 +37,26 @@ std::ostream& operator<<(std::ostream& os, const MyEdge& edge) {
 }
 
 
-// float compute_MST(DisjointSets &initialComponents, Graph &graph) {
+float compute_MST(DisjointSets &initialComponents, Graph &graph) {
 
-//     std::vector<int> nodes;
+    std::vector<int> nodes;
 
-//     float weight = 0;
+    float weight = 0;
 
-//     for (int i = 0; i < initialComponents.mData.size(); i++) {
-//         if (i != initialComponents.parent(i)) {
-//             MyEdge edge = {i, initialComponents.parent(i), 10};
-//             for (auto &_edge : graph.edges) {
-//                 if (_edge == edge) {
-//                     weight += _edge.weight;
-//                 }
-//             }
-//         }
-//     }
+    for (int i = 0; i < initialComponents.mData.size(); i++) {
+        if (i != initialComponents.parent(i)) {
+            MyEdge edge = {i, initialComponents.parent(i), 10};
+            for (auto &_edge : graph.edges) {
+                if (_edge == edge) {
+                    weight += _edge.weight;
+                }
+            }
+        }
+    }
 
-//     return weight;
+    return weight;
 
-// }
+}
 
 
 #endif

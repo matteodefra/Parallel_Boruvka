@@ -6,4 +6,6 @@ report/*
 /results
 /papers
 /old
-/images
+images/*
+!images/30M_speedup.png
+!images/15M_speedup.png
